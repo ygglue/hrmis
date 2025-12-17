@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,10 +29,22 @@
                     Manage employee records, track performance, and optimize HR operations all in one place.
                 </p>
                 <div class="hero-actions">
-                    <a href="app/auth/login.php" class="btn btn-primary">
-                        <span class="btn-text">Login to Dashboard</span>
-                        <span class="btn-icon">→</span>
-                    </a>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <div class="flex flex-col gap-2 justify-center items-center">
+                            <a href="app/admin/dashboard.php" class="btn btn-primary">
+                                <span class="btn-text">Go to Admin Dashboard</span>
+                                <span class="btn-icon">→</span>
+                            </a>
+                            <a href="app/auth/logout.php" class="btn btn-secondary" style="width: auto; padding: 12px 24px; font-size: 0.9rem;">
+                                <span class="btn-text">Logout</span>
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <a href="app/auth/login.php" class="btn btn-primary">
+                            <span class="btn-text">Login to Dashboard</span>
+                            <span class="btn-icon">→</span>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
@@ -80,6 +95,7 @@
 
         .hero-actions {
             animation: fadeInUp 0.9s ease;
+            min-height: 100px; /* Prevent layout shift */
         }
 
         /* Responsive Design */

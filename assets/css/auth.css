@@ -1,0 +1,314 @@
+/* ============================================
+   HRMIS - Authentication Pages Styles
+   Login, Register, and other auth pages
+   ============================================ */
+
+/* === AUTH CONTAINER === */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* === AUTH CARD === */
+.auth-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 48px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+    animation: fadeInUp 0.6s ease;
+}
+
+.auth-card:hover {
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-glow);
+}
+
+/* === AUTH HEADER === */
+.auth-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.auth-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.auth-header p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* === AUTH FORM === */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.auth-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auth-form label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.3px;
+}
+
+.auth-form input,
+.auth-form select {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.auth-form input:focus,
+.auth-form select:focus {
+    background: var(--bg-hover);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+.auth-form input:hover,
+.auth-form select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.auth-form input::placeholder {
+    color: var(--text-muted);
+}
+
+/* === PASSWORD INPUT WRAPPER === */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 48px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-sm);
+}
+
+.toggle-password:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
+.eye-icon {
+    font-size: 1.2rem;
+    user-select: none;
+}
+
+/* === INPUT HINT === */
+.input-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: -4px;
+}
+
+/* === BUTTON FULL WIDTH === */
+.btn-full {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+/* === AUTH FOOTER === */
+.auth-footer {
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.auth-footer p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.auth-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.auth-link:hover {
+    color: #7a8ef0;
+}
+
+.auth-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary-gradient);
+    transition: width var(--transition-fast);
+}
+
+.auth-link:hover::after {
+    width: 100%;
+}
+
+/* === CHECKBOX REMEMBER ME === */
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.remember-me label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* === FORGOT PASSWORD LINK === */
+.forgot-password {
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 8px;
+}
+
+.forgot-password a {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.forgot-password a:hover {
+    color: #667eea;
+}
+
+/* === DIVIDER === */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.auth-divider span {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 32px 24px;
+    }
+
+    .auth-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 16px;
+    }
+
+    .auth-card {
+        padding: 28px 20px;
+    }
+
+    .auth-header h1 {
+        font-size: 1.75rem;
+    }
+}
+
+/* === PASSWORD STRENGTH INDICATOR === */
+.password-strength {
+    margin-top: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.strength-bar {
+    height: 4px;
+    flex: 1;
+    background: var(--bg-input);
+    border-radius: 2px;
+    transition: all var(--transition-fast);
+}
+
+.strength-bar.active {
+    background: var(--primary-gradient);
+}
+
+.strength-bar.weak {
+    background: #f5576c;
+}
+
+.strength-bar.medium {
+    background: #f093fb;
+}
+
+.strength-bar.strong {
+    background: #4bfe9f;
+}
+
+.strength-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
