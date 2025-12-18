@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role_id'] = $user['role_id'];
 
             // Redirect to dashboard
-            header("Location: ../../");
+            header("Location: ../../dashboard.php");
             exit();
         } else {
             $error = "Invalid username or password.";
@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/auth.css">
 </head>
@@ -90,7 +91,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             placeholder="Enter your password"
                         >
                         <button type="button" class="toggle-password" data-target="password">
-                            <span class="eye-icon">👁️</span>
+                            <span class="material-symbols-outlined">
+                                visibility
+                            </span>
                         </button>
                     </div>
                 </div>

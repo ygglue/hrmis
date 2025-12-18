@@ -1,3 +1,131 @@
+<?php
+session_start();
+
+
+require_once "../../config/database.php";
+require_once "../../app/auth/require.php";
+
+$db = (new Database())->connect();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Location: /index.php');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
+    header('Content-Type: application/json');
+    
+    if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_id'], [2, 3])) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
+        exit;
+    }
+
+    try {
+        // 2. Set User ID for Activity Log Triggers
+        $userIdStmt = $db->prepare("SET @current_user_id = :user_id");
+        $userIdStmt->execute([':user_id' => $_SESSION['user_id']]);
+
+        $data = $_POST;
+
+        // Helper for strict 'Empty fields are not allowed' requirement
+        function sanitizeText($val) {
+            return ($val === '' || $val === null) ? 'N/A' : trim($val);
+        }
+
+        // Map POST data to DB columns provided in the schema
+        $mapped_data = [
+            'first_name' => $data['first_name'] ?? null,
+            'middle_name' => sanitizeText($data['middle_name'] ?? ''),
+            'last_name' => $data['last_name'] ?? null, // Required
+            'name_extension' => sanitizeText($data['name_extension'] ?? ''),
+            'birthdate' => $data['birthdate'] ?? null, // Required
+            'birth_city' => sanitizeText($data['birth_city'] ?? ''),
+            'birth_province' => sanitizeText($data['birth_province'] ?? ''),
+            'birth_country' => sanitizeText($data['birth_country'] ?? ''),
+            'sex' => $data['sex'] ?? null, // Required
+            'civil_status' => $data['civil_status'] ?? null, // Required
+            'height_in_meter' => !empty($data['height_in_meter']) ? (float)$data['height_in_meter'] : 0,
+            'weight_in_kg' => !empty($data['weight_in_kg']) ? (float)$data['weight_in_kg'] : 0,
+            'contactno' => sanitizeText($data['contactno'] ?? ''),
+            'blood_type' => sanitizeText($data['blood_type'] ?? ''),
+            'gsis_no' => sanitizeText($data['gsis_no'] ?? ''),
+            'sss_no' => sanitizeText($data['sss_no'] ?? ''),
+            'philhealthno' => sanitizeText($data['philhealthno'] ?? ''),
+            'tin' => sanitizeText($data['tin'] ?? ''),
+            'employee_no' => !empty($data['employee_no']) ? (int)$data['employee_no'] : null,
+            'citizenship' => sanitizeText($data['citizenship'] ?? ''),
+            'res_spec_address' => sanitizeText($data['res_spec_address'] ?? ''),
+            'res_street_address' => sanitizeText($data['res_street_address'] ?? ''),
+            'res_vill_address' => sanitizeText($data['res_vill_address'] ?? ''),
+            'res_barangay_address' => sanitizeText($data['res_barangay_address'] ?? ''),
+            'res_city' => sanitizeText($data['res_city'] ?? ''),
+            'res_municipality' => sanitizeText($data['res_municipality'] ?? ''),
+            'res_province' => sanitizeText($data['res_province'] ?? ''),
+            'res_zipcode' => sanitizeText($data['res_zipcode'] ?? ''),
+            'perm_spec_address' => sanitizeText($data['perm_spec_address'] ?? ''),
+            'perm_street_address' => sanitizeText($data['perm_street_address'] ?? ''),
+            'perm_vill_address' => sanitizeText($data['perm_vill_address'] ?? ''),
+            'perm_barangay_address' => sanitizeText($data['perm_barangay_address'] ?? ''),
+            'perm_city' => sanitizeText($data['perm_city'] ?? ''),
+            'perm_municipality' => sanitizeText($data['perm_municipality'] ?? ''),
+            'perm_province' => sanitizeText($data['perm_province'] ?? ''),
+            'perm_zipcode' => sanitizeText($data['perm_zipcode'] ?? ''),
+            'telephone' => sanitizeText($data['telephone'] ?? ''),
+            'mobile_no' => sanitizeText($data['mobile_no'] ?? ''),
+            'email' => sanitizeText($data['email'] ?? ''),
+            
+            // Logic for Complex/Question Fields
+            // For details, if answer is No, we can still put N/A or empty string. 
+            // The prompt implies strictly no empty fields.
+            'Q34_details' => sanitizeText($data['Q34_details'] ?? ''),
+            'Q35a' => isset($data['Q35a']) ? (int)$data['Q35a'] : 0,
+            'Q35b' => isset($data['Q35b']) ? (int)$data['Q35b'] : 0,
+            'Q35_details' => sanitizeText(trim(($data['Q35a_details'] ?? '') . ' ' . ($data['Q35b_details'] ?? ''))),
+            'Q36' => $data['Q36'] ?? 'No',
+            'Q36_details' => sanitizeText($data['Q36_details'] ?? ''),
+            'Q37' => isset($data['Q37']) ? (int)$data['Q37'] : 0,
+            'Q37_details' => sanitizeText($data['Q37_details'] ?? ''),
+            'Q38a' => isset($data['Q38']) ? (int)$data['Q38'] : 0,
+            'Q38b' => 0, // Not in current form layout
+            'Q38_details' => sanitizeText($data['Q38_details'] ?? ''),
+            'Q39a' => isset($data['Q39']) ? (int)$data['Q39'] : 0,
+            'Q39b' => 0, // Not in current form layout
+            'Q39_details' => sanitizeText($data['Q39_details'] ?? ''),
+            'Q40a' => isset($data['Q40a']) ? (int)$data['Q40a'] : 0,
+            'Q40a_details' => sanitizeText($data['Q40a_details'] ?? ''),
+            'Q40b' => isset($data['Q40b']) ? (int)$data['Q40b'] : 0,
+            'Q40b_details' => sanitizeText($data['Q40b_details'] ?? ''),
+            'Q40c' => isset($data['Q40c']) ? (int)$data['Q40c'] : 0,
+            'Q40c_details' => sanitizeText($data['Q40c_details'] ?? ''),
+        ];
+
+        $q34Val = $data['Q34'] ?? 'no';
+        $mapped_data['Q34A'] = ($q34Val === 'a') ? 1 : 0;
+        $mapped_data['Q34B'] = ($q34Val === 'b') ? 1 : 0;
+
+        $columns = array_keys($mapped_data);
+        $placeholders = array_map(function($col) { return ":$col"; }, $columns);
+        
+        $sql = "INSERT INTO employees (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        
+        $stmt = $db->prepare($sql);
+        
+        foreach ($mapped_data as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true, 'message' => 'Employee record created successfully!']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to create employee record.']);
+        }
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +148,7 @@
             <p>Complete the form below to add a new employee record to the system</p>
         </header>
 
-        <form id="employeeForm" class="employee-form">
+        <form id="employeeForm" class="employee-form" method='POST'>
             <!-- Personal Information Section -->
             <section class="form-section">
                 <div class="section-header">
@@ -28,9 +156,9 @@
                     <h2>Personal Information</h2>
                 </div>
                 
-                <div class="form-grid">
+                <div class="form-grid" id="formGrid" >
                     <div class="form-group">
-                        <label for="first_name">First Name <span class="required">*</span></label>
+                        <label for="first_name">First Name</label>
                         <input type="text" id="first_name" name="first_name" required>
                     </div>
                     
@@ -40,7 +168,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="last_name">Last Name <span class="required">*</span></label>
+                        <label for="last_name">Last Name</label>
                         <input type="text" id="last_name" name="last_name" required>
                     </div>
                     
@@ -50,28 +178,28 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="employee_no">Employee Number <span class="required">*</span></label>
+                        <label for="employee_no">Employee Number </label>
                         <input type="number" id="employee_no" name="employee_no" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="birthdate">Birthdate <span class="required">*</span></label>
+                        <label for="birthdate">Birthdate </label>
                         <input type="date" id="birthdate" name="birthdate" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="sex">Sex <span class="required">*</span></label>
+                        <label for="sex">Sex </label>
                         <select id="sex" name="sex" required>
-                            <option value="">Select...</option>
+                            <option value="" hidden>Select...</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="civil_status">Civil Status <span class="required">*</span></label>
+                        <label for="civil_status">Civil Status </label>
                         <select id="civil_status" name="civil_status" required>
-                            <option value="">Select...</option>
+                            <option value="" hidden>Select...</option>
                             <option value="Single">Single</option>
                             <option value="Married">Married</option>
                             <option value="Widowed">Widowed</option>
@@ -87,8 +215,8 @@
                     
                     <div class="form-group">
                         <label for="blood_type">Blood Type</label>
-                        <select id="blood_type" name="blood_type">
-                            <option value="">Select...</option>
+                        <select id="blood_type" name="blood_type" required>
+                            <option value="" hidden>Select...</option>
                             <option value="A+">A+</option>
                             <option value="A-">A-</option>
                             <option value="B+">B+</option>
@@ -102,12 +230,12 @@
                     
                     <div class="form-group">
                         <label for="height_in_meter">Height (meters)</label>
-                        <input type="number" id="height_in_meter" name="height_in_meter" step="0.01" placeholder="e.g., 1.75">
+                        <input type="number" id="height_in_meter" name="height_in_meter" step="0.01" placeholder="e.g., 1.75" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="weight_in_kg">Weight (kg)</label>
-                        <input type="number" id="weight_in_kg" name="weight_in_kg" step="0.1" placeholder="e.g., 70.5">
+                        <input type="number" id="weight_in_kg" name="weight_in_kg" step="0.1" placeholder="e.g., 70.5" required>
                     </div>
                 </div>
             </section>
@@ -122,17 +250,17 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="birth_city">Birth City</label>
-                        <input type="text" id="birth_city" name="birth_city">
+                        <input type="text" id="birth_city" name="birth_city" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="birth_province">Birth Province</label>
-                        <input type="text" id="birth_province" name="birth_province">
+                        <input type="text" id="birth_province" name="birth_province" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="birth_country">Birth Country</label>
-                        <input type="text" id="birth_country" name="birth_country">
+                        <input type="text" id="birth_country" name="birth_country" required>
                     </div>
                 </div>
             </section>
@@ -147,12 +275,12 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="contactno">Contact Number</label>
-                        <input type="tel" id="contactno" name="contactno">
+                        <input type="tel" id="contactno" name="contactno" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="mobile_no">Mobile Number</label>
-                        <input type="tel" id="mobile_no" name="mobile_no" maxlength="15">
+                        <input type="tel" id="mobile_no" name="mobile_no" maxlength="15" required>
                     </div>
                     
                     <div class="form-group">
@@ -192,7 +320,7 @@
                     
                     <div class="form-group">
                         <label for="tin">TIN</label>
-                        <input type="text" id="tin" name="tin">
+                        <input type="text" id="tin" name="tin" required>
                     </div>
                 </div>
             </section>
@@ -222,27 +350,27 @@
                     
                     <div class="form-group">
                         <label for="res_barangay_address">Barangay</label>
-                        <input type="text" id="res_barangay_address" name="res_barangay_address">
+                        <input type="text" id="res_barangay_address" name="res_barangay_address" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="res_city">City</label>
-                        <input type="text" id="res_city" name="res_city">
+                        <input type="text" id="res_city" name="res_city" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="res_municipality">Municipality</label>
-                        <input type="text" id="res_municipality" name="res_municipality">
+                        <input type="text" id="res_municipality" name="res_municipality" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="res_province">Province</label>
-                        <input type="text" id="res_province" name="res_province">
+                        <input type="text" id="res_province" name="res_province" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="res_zipcode">Zip Code</label>
-                        <input type="text" id="res_zipcode" name="res_zipcode">
+                        <input type="text" id="res_zipcode" name="res_zipcode" required>
                     </div>
                 </div>
             </section>
@@ -279,27 +407,27 @@
                     
                     <div class="form-group">
                         <label for="perm_barangay_address">Barangay</label>
-                        <input type="text" id="perm_barangay_address" name="perm_barangay_address">
+                        <input type="text" id="perm_barangay_address" name="perm_barangay_address" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="perm_city">City</label>
-                        <input type="text" id="perm_city" name="perm_city">
+                        <input type="text" id="perm_city" name="perm_city" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="perm_municipality">Municipality</label>
-                        <input type="text" id="perm_municipality" name="perm_municipality">
+                        <input type="text" id="perm_municipality" name="perm_municipality" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="perm_province">Province</label>
-                        <input type="text" id="perm_province" name="perm_province">
+                        <input type="text" id="perm_province" name="perm_province" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="perm_zipcode">Zip Code</label>
-                        <input type="text" id="perm_zipcode" name="perm_zipcode">
+                        <input type="text" id="perm_zipcode" name="perm_zipcode" required>
                     </div>
                 </div>
             </section>
@@ -316,15 +444,15 @@
                     <label class="question-label">34. Are you related by consanguinity or affinity to the appointing or recommending authority, or to the chief of bureau or office or to the person who has immediate supervision over you in the Office, Bureau or Department where you will be appointed?</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="Q34" value="a">
+                            <input type="radio" name="Q34" value="a" required>
                             <span>a. within the third degree?</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q34" value="b">
+                            <input type="radio" name="Q34" value="b" required>
                             <span>b. within the fourth degree (for Local Government Unit - Career Employees)?</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q34" value="no">
+                            <input type="radio" name="Q34" value="no" required>
                             <span>No</span>
                         </label>
                     </div>
@@ -342,11 +470,11 @@
                         <label class="question-label">a. Have you ever been found guilty of any administrative offense?</label>
                         <div class="radio-group">
                             <label class="radio-label">
-                                <input type="radio" name="Q35a" value="1">
+                                <input type="radio" name="Q35a" value="1" required>
                                 <span>Yes</span>
                             </label>
                             <label class="radio-label">
-                                <input type="radio" name="Q35a" value="0">
+                                <input type="radio" name="Q35a" value="0" required>
                                 <span>No</span>
                             </label>
                         </div>
@@ -357,14 +485,15 @@
                     </div>
 
                     <div class="sub-question">
+                        <span class="required">*</span>
                         <label class="question-label">b. Have you been criminally charged before any court?</label>
                         <div class="radio-group">
                             <label class="radio-label">
-                                <input type="radio" name="Q35b" value="1">
+                                <input type="radio" name="Q35b" value="1" required>
                                 <span>Yes</span>
                             </label>
                             <label class="radio-label">
-                                <input type="radio" name="Q35b" value="0">
+                                <input type="radio" name="Q35b" value="0" required>
                                 <span>No</span>
                             </label>
                         </div>
@@ -380,11 +509,11 @@
                     <label class="question-label">36. Have you ever been criminally charged before any court?</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="Q36" value="Yes">
+                            <input type="radio" name="Q36" value="Yes" required>
                             <span>Yes</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q36" value="No">
+                            <input type="radio" name="Q36" value="No" required>
                             <span>No</span>
                         </label>
                     </div>
@@ -399,11 +528,11 @@
                     <label class="question-label">37. Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="Q37" value="1">
+                            <input type="radio" name="Q37" value="1" required>
                             <span>Yes</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q37" value="0">
+                            <input type="radio" name="Q37" value="0" required>
                             <span>No</span>
                         </label>
                     </div>
@@ -418,11 +547,11 @@
                     <label class="question-label">38. Have you ever been separated from the service in any of the following modes: resignation, retirement, dropped from the rolls, dismissal, termination, end of term, finished contract or phased out (abolition) in the public or private sector?</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="Q38" value="1">
+                            <input type="radio" name="Q38" value="1" required>
                             <span>Yes</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q38" value="0">
+                            <input type="radio" name="Q38" value="0" required>
                             <span>No</span>
                         </label>
                     </div>
@@ -437,11 +566,11 @@
                     <label class="question-label">39. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="Q39" value="1">
+                            <input type="radio" name="Q39" value="1" required>
                             <span>Yes</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q39" value="0">
+                            <input type="radio" name="Q39" value="0" required>
                             <span>No</span>
                         </label>
                     </div>
@@ -459,17 +588,17 @@
                         <label class="question-label">a. Are you a member of any indigenous group?</label>
                         <div class="radio-group">
                             <label class="radio-label">
-                                <input type="radio" name="Q40a" value="1">
+                                <input type="radio" name="Q40a" value="1" required>
                                 <span>Yes</span>
                             </label>
                             <label class="radio-label">
-                                <input type="radio" name="Q40a" value="0">
+                                <input type="radio" name="Q40a" value="0" required>
                                 <span>No</span>
                             </label>
                         </div>
                         <div class="form-group">
                             <label for="Q40a_details">If YES, please specify:</label>
-                            <input type="text" id="Q40a_details" name="Q40a_details">
+                            <input type="text" id="Q40a_details" name="Q40a_details" >
                         </div>
                     </div>
 
@@ -477,11 +606,11 @@
                         <label class="question-label">b. Are you a person with disability?</label>
                         <div class="radio-group">
                             <label class="radio-label">
-                                <input type="radio" name="Q40b" value="1">
+                                <input type="radio" name="Q40b" value="1" required>
                                 <span>Yes</span>
                             </label>
                             <label class="radio-label">
-                                <input type="radio" name="Q40b" value="0">
+                                <input type="radio" name="Q40b" value="0" required>
                                 <span>No</span>
                             </label>
                         </div>
@@ -495,11 +624,11 @@
                         <label class="question-label">c. Are you a solo parent?</label>
                         <div class="radio-group">
                             <label class="radio-label">
-                                <input type="radio" name="Q40c" value="1">
+                                <input type="radio" name="Q40c" value="1" required>
                                 <span>Yes</span>
                             </label>
                             <label class="radio-label">
-                                <input type="radio" name="Q40c" value="0">
+                                <input type="radio" name="Q40c" value="0" required>
                                 <span>No</span>
                             </label>
                         </div>

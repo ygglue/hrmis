@@ -19,7 +19,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $employees[] = [
         'id' => $row['idemployees'],
         'name' => trim($row['full_name']),
-        'position' => 'Role ',
+        'position' => 'Employee',
         'avatar_color' => '#' . substr(md5($random_color_int), 0, 6)
     ];
     $random_color_int += 1;
@@ -45,7 +45,8 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     <nav class="navbar">
         <div class="container navbar-content">
             <a href="app/dashboard.php" class="navbar-brand">
-                <span class="text-gradient">HRMIS</span> <span class="badge-admin">Admin</span>
+                <span class="text-gradient">HRMIS</span> 
+                <span class="badge-admin">Admin</span> 
             </a>
             <div class="navbar-actions">
                 <span class="user-greeting">Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></span>
@@ -82,7 +83,6 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 </a>
             <?php endforeach; ?>
             
-            <!-- Add placeholder card -->
             <a href="app/employee/add.php" class="employee-card new-employee">
                 <div class="new-icon">
                     <span class="material-symbols-outlined">add</span>

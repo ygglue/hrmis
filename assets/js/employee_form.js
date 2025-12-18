@@ -8,16 +8,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('employeeForm');
     const resetBtn = document.getElementById('resetBtn');
     const sameAsResidentialCheckbox = document.getElementById('sameAsResidential');
+    const formGrid = document.getElementById('formGrid');
 
     // ============================================
-    // FORM SUBMISSION
+    // ADD REQUIRED ICON IN LABEL IF CONTROL IS REQUIRED
     // ============================================
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        if (validateEmployeeForm()) {
-            submitEmployeeForm();
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        if (input.type != 'radio') {
+            const labels = input.labels;
+            if (input.required) {
+                labels.forEach(label => {
+                    const requiredIcon = document.createElement('span');
+                    requiredIcon.className = 'required';
+                    requiredIcon.textContent = '*';
+                    label.appendChild(requiredIcon);
+                })
+            }
         }
     });
 
@@ -123,44 +130,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         return isValid;
-    }
-
-    // ============================================
-    // FORM SUBMISSION
-    // ============================================
-
-    function submitEmployeeForm() {
-        const submitBtn = form.querySelector('.btn-primary');
-        setButtonLoading(submitBtn, true);
-
-        // Collect form data
-        const data = collectFormData(form);
-
-        // Handle radio buttons and checkboxes
-        handleRadioButtons(data);
-        handleCheckboxes(data);
-
-        // Log the data (in production, this would be sent to a server)
-        devLog('Employee Data:', data);
-
-        // Simulate API call
-        setTimeout(() => {
-            setButtonLoading(submitBtn, false);
-
-            // Show success message
-            showMessage('Employee record has been successfully submitted!', 'success');
-
-            // Optional: Reset form after successful submission
-            setTimeout(() => {
-                if (confirmAction('Employee record saved! Would you like to add another employee?')) {
-                    form.reset();
-                    removeFromLocalStorage('employeeFormDraft');
-                } else {
-                    // Redirect to employee list or dashboard
-                    // window.location.href = 'employee_list.php';
-                }
-            }, 1500);
-        }, 2000);
     }
 
     // Handle radio button values

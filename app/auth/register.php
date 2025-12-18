@@ -11,8 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
-    // Set default values
-    $role_id = 2; // Default role (e.g., Employee/User)
+    $role_id = 1;
     $employee_id = null;
 
     // Validation
@@ -44,12 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':role' => $role_id,
                     ':employee' => $employee_id
                 ]);
-
-                $success = "Account created successfully! Redirecting to login...";
-                header("refresh:2;url=login.php");
             } catch (PDOException $e) {
                 $error = "Registration failed. Please try again.";
             }
+
+            $_SESSION['user_id'] = $db->lastInsertId();
+            $_SESSION['username'] = $username;
+            $_SESSION['role_id'] = $role_id;
+
+            header("Loc\ation: ../../dashboard.php");
+            exit();
         }
     }
 }

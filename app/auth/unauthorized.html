@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/hrmis/">
+    <title>Unauthorized Access - HRMIS</title>
+    <meta name="description" content="Access to this resource is restricted.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/auth.css">
+    
+    <style>
+        .unauthorized-icon {
+            font-size: 80px;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+            display: inline-block;
+            filter: drop-shadow(0 0 15px rgba(245, 87, 108, 0.3));
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        .error-code {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 12px;
+            display: block;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .auth-card.text-center {
+            text-align: center;
+        }
+
+        .unauthorized-message {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-gradient"></div>
+    
+    <div class="auth-container">
+        <div class="auth-card text-center">
+            <div class="auth-header">
+                <span class="material-symbols-outlined unauthorized-icon">shield_lock</span>
+                <span class="error-code">403 Forbidden</span>
+                <h1 class="text-gradient">Access Denied</h1>
+                <p class="mt-2 unauthorized-message">You don't have the necessary permissions to view this page.</p>
+            </div>
+
+            <div class="message error">
+                <span class="material-symbols-outlined" style="font-size: 20px;">info</span>
+                <span>Restricted Area: Access Logged</span>
+            </div>
+
+            <div class="action-buttons">
+                <a href="index.php" class="btn btn-primary btn-full">
+                    <span class="material-symbols-outlined">home</span>
+                    <span class="btn-text">Return Home</span>
+                </a>
+            </div>
+
+            <div class="auth-footer">
+                <p>&copy; 2025 HRMIS. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/scripts.js"></script>
+</body>
+</html>
