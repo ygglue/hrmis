@@ -14,7 +14,7 @@ function requireRole($allowedRoles) {
     }
     
     if (!in_array($_SESSION['role_id'], $allowedRoles)) {
-        header("Location: unauthorized.html");
+        header("Location: /hrmis/app/auth/unauthorized.html");
         exit();
     }
 }

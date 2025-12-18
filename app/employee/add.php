@@ -1,37 +1,39 @@
 <?php
 session_start();
 
-
 require_once "../../config/database.php";
 require_once "../../app/auth/require.php";
+requireAdmin();
 
 $db = (new Database())->connect();
+$error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Location: /index.php');
+function generateUniqueId($pdo) {
+    $id = random_int(100000, 999999999);
+    
+    // Check if it exists
+    $stmt = $pdo->prepare("SELECT idemployees FROM employees WHERE idemployees = ?");
+    $stmt->execute([$id]);
+    
+    if ($stmt->fetch()) {
+        // If it exists, try again
+        return generateUniqueId($pdo);
+    }
+    
+    return $id;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
-    header('Content-Type: application/json');
-    
-    if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role_id'], [2, 3])) {
-        echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
-        exit;
-    }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
-        // 2. Set User ID for Activity Log Triggers
-        $userIdStmt = $db->prepare("SET @current_user_id = :user_id");
-        $userIdStmt->execute([':user_id' => $_SESSION['user_id']]);
 
         $data = $_POST;
 
-        // Helper for strict 'Empty fields are not allowed' requirement
         function sanitizeText($val) {
             return ($val === '' || $val === null) ? 'N/A' : trim($val);
         }
 
-        // Map POST data to DB columns provided in the schema
+
         $mapped_data = [
             'first_name' => $data['first_name'] ?? null,
             'middle_name' => sanitizeText($data['middle_name'] ?? ''),
@@ -74,21 +76,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
             'email' => sanitizeText($data['email'] ?? ''),
             
             // Logic for Complex/Question Fields
-            // For details, if answer is No, we can still put N/A or empty string. 
-            // The prompt implies strictly no empty fields.
             'Q34_details' => sanitizeText($data['Q34_details'] ?? ''),
             'Q35a' => isset($data['Q35a']) ? (int)$data['Q35a'] : 0,
             'Q35b' => isset($data['Q35b']) ? (int)$data['Q35b'] : 0,
             'Q35_details' => sanitizeText(trim(($data['Q35a_details'] ?? '') . ' ' . ($data['Q35b_details'] ?? ''))),
-            'Q36' => $data['Q36'] ?? 'No',
+            'Q36' => $data['Q36'] ?? 0,
             'Q36_details' => sanitizeText($data['Q36_details'] ?? ''),
             'Q37' => isset($data['Q37']) ? (int)$data['Q37'] : 0,
             'Q37_details' => sanitizeText($data['Q37_details'] ?? ''),
-            'Q38a' => isset($data['Q38']) ? (int)$data['Q38'] : 0,
-            'Q38b' => 0, // Not in current form layout
+            'Q38a' => isset($data['Q38a']) ? (int)$data['Q38a'] : 0,
+            'Q38b' => isset($data['Q38b']) ? (int)$data['Q38b'] : 0,
             'Q38_details' => sanitizeText($data['Q38_details'] ?? ''),
-            'Q39a' => isset($data['Q39']) ? (int)$data['Q39'] : 0,
-            'Q39b' => 0, // Not in current form layout
+            'Q39' => isset($data['Q39']) ? (int)$data['Q39'] : 0,
             'Q39_details' => sanitizeText($data['Q39_details'] ?? ''),
             'Q40a' => isset($data['Q40a']) ? (int)$data['Q40a'] : 0,
             'Q40a_details' => sanitizeText($data['Q40a_details'] ?? ''),
@@ -104,8 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
 
         $columns = array_keys($mapped_data);
         $placeholders = array_map(function($col) { return ":$col"; }, $columns);
+
+        $newId = generateUniqueId($db);
         
-        $sql = "INSERT INTO employees (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        $sql = "INSERT INTO employees (idemployees, " . implode(', ', $columns) . ") VALUES (". $newId . ", " . implode(', ', $placeholders) . ")";
         
         $stmt = $db->prepare($sql);
         
@@ -114,9 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
         }
 
         if ($stmt->execute()) {
-            echo json_encode(['success' => true, 'message' => 'Employee record created successfully!']);
+            if (isset($_SERVER['HTTP_REFERER'])) {
+                header("Location: " . $_SERVER['HTTP_REFERER']);
+            } else {
+                header("Location: /index.php"); 
+            }
+            exit();
         } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to create employee record.']);
+            $error = "Failed to save employee...";
         }
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
@@ -441,6 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
                 
                 <!-- Question 34 -->
                 <div class="question-group">
+                    <span class="required">*</span>
                     <label class="question-label">34. Are you related by consanguinity or affinity to the appointing or recommending authority, or to the chief of bureau or office or to the person who has immediate supervision over you in the Office, Bureau or Department where you will be appointed?</label>
                     <div class="radio-group">
                         <label class="radio-label">
@@ -465,8 +472,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
                 <!-- Question 35 -->
                 <div class="question-group">
                     <label class="question-label">35. Answer the following questions:</label>
-                    
                     <div class="sub-question">
+                        <span class="required">*</span>
                         <label class="question-label">a. Have you ever been found guilty of any administrative offense?</label>
                         <div class="radio-group">
                             <label class="radio-label">
@@ -506,14 +513,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
 
                 <!-- Question 36 -->
                 <div class="question-group">
-                    <label class="question-label">36. Have you ever been criminally charged before any court?</label>
+                    <span class="required">*</span>
+                    <label class="question-label">36. Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</label>
                     <div class="radio-group">
                         <label class="radio-label">
-                            <input type="radio" name="Q36" value="Yes" required>
+                            <input type="radio" name="Q36" value="1" required>
                             <span>Yes</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="Q36" value="No" required>
+                            <input type="radio" name="Q36" value="0" required>
                             <span>No</span>
                         </label>
                     </div>
@@ -525,7 +533,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
 
                 <!-- Question 37 -->
                 <div class="question-group">
-                    <label class="question-label">37. Have you ever been convicted of any crime or violation of any law, decree, ordinance or regulation by any court or tribunal?</label>
+                    <span class="required">*</span>
+                    <label class="question-label">37. Have you ever been separated from the service in any of the following modes: resignation, retirement, dropped from the rolls, dismissal, termination, end of term, finished contract or phased out (abolition) in the public or private sector?</label>
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="Q37" value="1" required>
@@ -544,26 +553,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
 
                 <!-- Question 38 -->
                 <div class="question-group">
-                    <label class="question-label">38. Have you ever been separated from the service in any of the following modes: resignation, retirement, dropped from the rolls, dismissal, termination, end of term, finished contract or phased out (abolition) in the public or private sector?</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="Q38" value="1" required>
-                            <span>Yes</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="Q38" value="0" required>
-                            <span>No</span>
-                        </label>
+                    <label class="question-label">38. Answer the following questions:</label>
+                    <div class="sub-question">
+                        <span class="required">*</span>
+                        <label class="question-label">a. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="Q38a" value="1" required>
+                                <span>Yes</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="Q38a" value="0" required>
+                                <span>No</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="Q38a_details">If YES, give details:</label>
+                            <textarea id="Q38a_details" name="Q35a_details" rows="2"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="Q38_details">If YES, give details:</label>
-                        <textarea id="Q38_details" name="Q38_details" rows="2"></textarea>
+
+                    <div class="sub-question">
+                        <span class="required">*</span>
+                        <label class="question-label">b. Have you resigned from the government service during the three (3)-month period before the last election to promote/actively campaign for a national or local candidate?</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="Q38b" value="1" required>
+                                <span>Yes</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="Q38b" value="0" required>
+                                <span>No</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="Q38b_details">If YES, give details:</label>
+                            <textarea id="Q38b_details" name="Q35b_details" rows="2"></textarea>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Question 39 -->
                 <div class="question-group">
-                    <label class="question-label">39. Have you ever been a candidate in a national or local election held within the last year (except Barangay election)?</label>
+                    <span class="required">*</span>
+                    <label class="question-label">39. Have you acquired the status of an immigrant or permanent resident of another country?</label>
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="Q39" value="1" required>
@@ -575,8 +608,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
                         </label>
                     </div>
                     <div class="form-group">
-                        <label for="Q39_details">If YES, give details:</label>
-                        <textarea id="Q39_details" name="Q39_details" rows="2"></textarea>
+                        <label for="Q37_details">If YES, give details:</label>
+                        <textarea id="Q37_details" name="Q37_details" rows="2"></textarea>
                     </div>
                 </div>
 
@@ -585,6 +618,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
                     <label class="question-label">40. Pursuant to: (a) Indigenous People's Act (RA 8371); (b) Magna Carta for Disabled Persons (RA 7277); and (c) Solo Parents Welfare Act of 2000 (RA 8972), please answer the following items:</label>
                     
                     <div class="sub-question">
+                        <span class="required">*</span>
                         <label class="question-label">a. Are you a member of any indigenous group?</label>
                         <div class="radio-group">
                             <label class="radio-label">
@@ -603,6 +637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
                     </div>
 
                     <div class="sub-question">
+                        <span class="required">*</span>
                         <label class="question-label">b. Are you a person with disability?</label>
                         <div class="radio-group">
                             <label class="radio-label">
@@ -621,6 +656,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
                     </div>
 
                     <div class="sub-question">
+                        <span class="required">*</span>
                         <label class="question-label">c. Are you a solo parent?</label>
                         <div class="radio-group">
                             <label class="radio-label">
@@ -642,6 +678,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'dfgdfhg') {
 
             <!-- Form Actions -->
             <div class="form-actions">
+                <?php if ($error): ?>
+                    <div class="message error">
+                        <span>⚠</span>
+                        <span><?php echo htmlspecialchars($error); ?></span>
+                    </div>
+                <?php endif; ?>
                 <button type="button" class="btn btn-secondary" id="resetBtn">Reset Form</button>
                 <button type="submit" class="btn btn-primary">
                     <span class="btn-text">Submit Employee Record</span>

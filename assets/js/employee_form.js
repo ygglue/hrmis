@@ -54,14 +54,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Disable permanent address fields
             const inputs = permanentFields.querySelectorAll('input');
-            inputs.forEach(input => input.disabled = true);
+            inputs.forEach(input => input.readOnly = true);
         } else {
             permanentFields.style.opacity = '1';
             permanentFields.style.pointerEvents = 'auto';
 
             // Enable permanent address fields
             const inputs = permanentFields.querySelectorAll('input');
-            inputs.forEach(input => input.disabled = false);
+            inputs.forEach(input => input.readOnly = false);
         }
     });
 

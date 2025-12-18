@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role_id'] = $user['role_id'];
 
             // Redirect to dashboard
-            header("Location: ../../dashboard.php");
+            header("Location: ../admin/dashboard.php");
             exit();
         } else {
             $error = "Invalid username or password.";
