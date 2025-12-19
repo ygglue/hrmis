@@ -19,6 +19,14 @@ class Database {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
                 ]
             );
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            if (isset($_SESSION['user_id'])) {
+                $userId = $_SESSION['user_id'];
+                $this->conn->exec("SET @current_user_id = $userId");
+            }
         } catch (PDOException $e) {
             die("Database connection failed.");
         }

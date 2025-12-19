@@ -1,13 +1,11 @@
 <?php
 session_start();
 require_once "../../config/database.php";
+require_once "../auth/require.php";
+
+requireAdmin();
 
 $db = (new Database())->connect();
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../auth/login.php");
-    exit();
-}
 
 $stmt = $db->query('SELECT idemployees, CONCAT(last_name, ", ", first_name, " ", middle_name) AS "full_name" FROM employees');
 $stmt->execute();
@@ -44,10 +42,14 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="container navbar-content">
-            <a href="app/dashboard.php" class="navbar-brand">
+            <a href="/hrmis/app/admin/dashboard.php" class="navbar-brand">
                 <span class="text-gradient">HRMIS</span> 
                 <span class="badge-admin">Admin</span> 
             </a>
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="employeeSearch" placeholder="Search employees..." autocomplete="off">
+            </div>
             <div class="navbar-actions">
                 <span class="user-greeting">Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></span>
                 <a href="app/auth/logout.php" class="btn btn-secondary btn-sm">
@@ -72,7 +74,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
         <div class="employee-grid">
             <?php foreach ($employees as $employee): ?>
-                <a href="#" class="employee-card">
+                <a href="app/employee/update.php?id=<?php echo $employee['id']; ?>" class="employee-card">
                     <div class="employee-avatar" style="background: <?php echo $employee['avatar_color']; ?>">
                         <?php echo substr($employee['name'], 0, 1); ?>
                     </div>
@@ -83,7 +85,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 </a>
             <?php endforeach; ?>
             
-            <a href="app/employee/add.php" class="employee-card new-employee">
+            <a href="app/employee/add.php" class="employee-card new-employee" id="addEmployeeCard">
                 <div class="new-icon">
                     <span class="material-symbols-outlined">add</span>
                 </div>
@@ -95,8 +97,6 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     </div>
 
     <style>
-        /* Admin Dashboard Styles */
-        /* Override container width for Admin Dashboard to fit 6 columns better */
         .container {
             max-width: 1400px;
         }
@@ -277,8 +277,87 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 grid-template-columns: 1fr;
             }
         }
+        /* Proper Search Bar Styles */
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+            margin: 0 40px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color var(--transition-fast);
+        }
+
+        #employeeSearch {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all var(--transition-normal);
+            outline: none;
+        }
+
+        #employeeSearch:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            width: 110%;
+        }
+
+        #employeeSearch:focus + .search-icon {
+            color: #667eea;
+        }
+
+        /* Hide cards that don't match search */
+        .employee-card.hidden {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .search-wrapper {
+                margin: 0 20px;
+                max-width: none;
+            }
+            #employeeSearch:focus {
+                width: 100%;
+            }
+        }
     </style>
 
     <script src="assets/js/scripts.js"></script>
+    <script>
+        const employeeSearch = document.getElementById('employeeSearch')
+        const addEmployeeCard = document.getElementById('addEmployeeCard')
+
+        // Real-time Search Functionality
+        employeeSearch.addEventListener('input', function(e) {
+            if (employeeSearch.value != '' && addEmployeeCard.checkVisibility()) {
+                addEmployeeCard.classList.add('hidden');
+            } else {
+                addEmployeeCard.classList.remove('hidden');
+            }
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.employee-card:not(.new-employee)');
+            
+            cards.forEach(card => {
+                const name = card.querySelector('.employee-name').textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

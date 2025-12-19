@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = "Please enter both username and password.";
     } else {
-        $stmt = $db->prepare("SELECT id, username, password_hash, role_id FROM users WHERE username = :username");
+        $stmt = $db->prepare("SELECT id, username, password_hash, role_id, employee_id FROM users WHERE username = :username");
         $stmt->execute([':username' => $username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -22,9 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role_id'] = $user['role_id'];
+            $_SESSION['employee_id'] = $user['employee_id'];
 
-            // Redirect to dashboard
-            header("Location: ../admin/dashboard.php");
+            if ($user['role_id'] == 1) {
+                header("Location: ../employee/update.php?id=" . $user['employee_id']);
+            } else {
+                header("Location: ../employee/dashboard.php");
+            }
             exit();
         } else {
             $error = "Invalid username or password.";

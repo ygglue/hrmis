@@ -1,7 +1,7 @@
 <?php
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
-        header("Location: ../login.php");
+        header("Location: /hrmis/app/auth/login.php");
         exit();
     }
 }
